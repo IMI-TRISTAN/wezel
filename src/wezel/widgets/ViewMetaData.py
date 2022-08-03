@@ -68,7 +68,6 @@ class ScrollLabel(QScrollArea):
 
         verticalLayout.addWidget(self.label)
 
-   
     def setText(self, text):
         self.label.setText(text)
 
@@ -164,7 +163,7 @@ class SeriesViewerMetaData(QWidget):
                     if meta_element.VR == "OB" or meta_element.VR == "OW":
                         self.createScrollableLabel(rowPosition, valueMetadata)
                     elif meta_element.VR == "SQ":
-                        self.iterateSequenceTag(self.tableWidget, meta_element)
+                        self.recurseSequenceTag(self.tableWidget, meta_element)
                     else:
                         self.tableWidget.setItem(rowPosition , 3, QTableWidgetItem(valueMetadata))
                 
@@ -195,10 +194,11 @@ class SeriesViewerMetaData(QWidget):
                     if data_element.VR == "OB" or data_element.VR == "OW":
                         self.createScrollableLabel(rowPosition, valueMetadata)
                     elif data_element.VR == "SQ":
-                        self.iterateSequenceTag(self.tableWidget, data_element)
+                        self.recurseSequenceTag(self.tableWidget, data_element)
                     else:
                         self.tableWidget.setItem(rowPosition , 3, QTableWidgetItem(valueMetadata))
             self.resizeColumnsToContents()
+            QApplication.processEvents()
             QApplication.restoreOverrideCursor()
         except Exception as e:
             print('Error in : SeriesViewerMetaData.populateTable' + str(e))
@@ -220,11 +220,15 @@ class SeriesViewerMetaData(QWidget):
         self.tableWidget.setHorizontalHeaderItem(3 , headerItem)
 
 
-    def iterateSequenceTag(self, table, dataset, level=''):
+    def recurseSequenceTag(self, table, dataset, level=''):
+        """
+        This function uses recursion to traverse the Sequence (SQ) tag
+        and inserts the data found in this tag in the DICOM metadata table.
+        """
         try:
             for data_element in dataset:
                 if isinstance(data_element, pydicom.dataset.Dataset):
-                    self.iterateSequenceTag(table, data_element, level=' > ')
+                    self.recurseSequenceTag(table, data_element, level=' > ')
                 else:
                     rowPosition = table.rowCount()
                     table.insertRow(rowPosition)
@@ -245,28 +249,12 @@ class SeriesViewerMetaData(QWidget):
                     
                     if data_element.VR == "SQ":
                         level+=' > '
-                        self.iterateSequenceTag(table, data_element, level)
+                        self.recurseSequenceTag(table, data_element, level)
                     else:
                         table.setItem(rowPosition , 3, QTableWidgetItem(valueMetadata))
-
         except Exception as e:
-            print('Error in : SeriesViewerMetaData.iterateSequenceTag' + str(e))
-            #logger.error('Error in : SeriesViewerMetaData.iterateSequenceTag' + str(e))
-
-
-    def show_dataset(self, dataset, order, indent=""):
-        try:
-            print("order={}".format(order))
-            for data_element in dataset:
-                print("data_element={}".format(data_element))
-                if data_element.VR == "SQ":
-                    indent += 4 * " "
-                    for item in data_element:
-                        show_dataset(item, indent)
-                    indent = indent[4:]
-                print(indent + str(elem))
-        except Exception as e:
-            print('Error in : SeriesViewerMetaData.show_dataset' + str(e))
+            print('Error in : SeriesViewerMetaData.recurseSequenceTag' + str(e))
+            #logger.error('Error in : SeriesViewerMetaData.recurseSequenceTag' + str(e))
 
 
     def exportToFile(self, parent, excel=False, csv=False):
