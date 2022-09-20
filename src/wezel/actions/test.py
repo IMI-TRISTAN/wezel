@@ -12,7 +12,7 @@ class Test_UserInput(wezel.Action):
         filters = ["Gaussian", "Uniform", "Median", "Maximum", "Wiener"]
         flavours = ["Chocolate", "Vanilla", "Strawberry"]
 
-        cancel, input = app.dialog.input(
+        cancel, output = app.dialog.input(
             {"label":"Which filter?", "type":"listview", "list": filters},
             {"label":"Which filter?", "type":"dropdownlist", "list": filters, "value": 2},
             {"label":"Which flavour?", "type":"dropdownlist", "list": flavours},
@@ -27,5 +27,6 @@ class Test_UserInput(wezel.Action):
             {"label":"Type a string", "type":"string","value":"hello world!"},
             title = "Can we have some input?")
         if not cancel: 
-            for field in input:
-                print(field["label"], ': ', field["value"])
+            for field in output:
+                print(field)
+                
