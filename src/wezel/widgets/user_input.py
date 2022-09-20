@@ -52,16 +52,13 @@ class ParameterInputDialog(QDialog):
             self.fields = fields
             self.setWindowTitle(title)
             #Hide ? help button
-            #self.setWindowFlags(self.windowFlags() ^ QtCore.Qt.WindowContextHelpButtonHint)
             self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
             #Hide top right hand corner X close button
-            #self.setWindowFlags(self.windowFlags() ^ QtCore.Qt.WindowCloseButtonHint)
             self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, False)
             # The following line creates a Customized Window where there are no close and help buttons - relevant for MacOS
             # Consider Qt.FramelessWindowHint if it works for Mac OS
             self.setWindowFlag(QtCore.Qt.CustomizeWindowHint, True)
             QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel   #OK and Cancel button
-            #QBtn = QDialogButtonBox.Ok    #OK button only
             self.buttonBox = QDialogButtonBox(QBtn)
             self.buttonBox.accepted.connect(self.accept)   #OK button
             self.buttonBox.rejected.connect(self.close)  #Cancel button
@@ -81,50 +78,17 @@ class ParameterInputDialog(QDialog):
                     #types when they are developing new WEZEL tools that need
                     #an input dialog
                     raise IncorrectParameterTypeError
+
                 if paramType == "integer":
-                    self.input = QSpinBox()
-                    if value2:
-                        self.input.setMinimum(int(value2))
-                    if value3:
-                        self.input.setMaximum(int(value3))
-                    if value1:
-                        self.input.setValue(int(value1))
+                    self.create_integer_spinbox(value1, value2, value3)
                 elif paramType == "float":
-                    self.input = QDoubleSpinBox()
-                    if value2:
-                        self.input.setMinimum(float(value2))
-                    if value3:
-                        self.input.setMaximum(float(value3))
-                    if value1:
-                        self.input.setValue(float(value1))
+                    self.create_float_spinbox(value1, value2, value3)
                 elif paramType == "string":
-                    self.input = QLineEdit()
-                    if key=="Password": self.input.setEchoMode(QLineEdit.Password)
-                    if value1:
-                        self.input.setText(value1)
-                    else:
-                        self.input.setPlaceholderText("Enter your text")
-                    #uncomment to set an input mask
-                    #self.input.setInputMask('000.000.000.000;_')
+                    self.create_string_input(key, value1)
                 elif paramType == "dropdownlist":
-                    self.input = QComboBox()
-                    self.input.addItems(lists[listCounter])
-                    listCounter += 1
-                    if value1:
-                        self.input.setCurrentIndex(int(value1))   
+                    listCounter = self.create_dropdownlist(lists, listCounter, value1)   
                 elif paramType == "listview":
-                    self.input = QListWidget()
-                    self.input.setSelectionMode(QAbstractItemView.ExtendedSelection)
-                    self.input.addItems(lists[listCounter])
-                    #self.input.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-                    #self.input.setCheckState(Qt.Unchecked)
-                    # scroll bar 
-                    scrollBar = QScrollBar(self) 
-                    # setting vertical scroll bar to it 
-                    self.input.setVerticalScrollBar(scrollBar)
-                    self.input.setMinimumHeight(self.input.sizeHintForColumn(0))
-                    self.input.setMinimumWidth(self.input.sizeHintForColumn(0))
-                    listCounter += 1
+                    listCounter = self.create_listview(lists, listCounter)
                     
                 self.layout.addRow(key, self.input)
                 self.listWidget.append(self.input)
@@ -144,6 +108,60 @@ class ParameterInputDialog(QDialog):
         except Exception as e:
             print('Error in class ParameterInputDialog.__init__: ' + str(e))
             #logger.error('Error in class ParameterInputDialog.__init__: ' + str(e)) 
+
+
+    def create_integer_spinbox(self, value1, value2, value3):
+        self.input = QSpinBox()
+        if value2:
+            self.input.setMinimum(int(value2))
+        if value3:
+            self.input.setMaximum(int(value3))
+        if value1:
+            self.input.setValue(int(value1))
+
+
+    def create_float_spinbox(self, value1, value2, value3):
+        self.input = QDoubleSpinBox()
+        if value2:
+            self.input.setMinimum(float(value2))
+        if value3:
+            self.input.setMaximum(float(value3))
+        if value1:
+            self.input.setValue(float(value1))
+
+
+    def create_string_input(self, key, value1):
+        self.input = QLineEdit()
+        if key=="Password": self.input.setEchoMode(QLineEdit.Password)
+        if value1:
+            self.input.setText(value1)
+        else:
+            self.input.setPlaceholderText("Enter your text")
+        #uncomment to set an input mask
+        #self.input.setInputMask('000.000.000.000;_')
+
+
+    def create_dropdownlist(self, lists, listCounter, value1):
+        self.input = QComboBox()
+        self.input.addItems(lists[listCounter])
+        listCounter += 1
+        if value1:
+            self.input.setCurrentIndex(int(value1))
+        return listCounter
+
+
+    def create_listview(self, lists, listCounter):
+        self.input = QListWidget()
+        self.input.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.input.addItems(lists[listCounter])
+        # scroll bar 
+        scrollBar = QScrollBar(self) 
+        # setting vertical scroll bar to it 
+        self.input.setVerticalScrollBar(scrollBar)
+        self.input.setMinimumHeight(self.input.sizeHintForColumn(0))
+        self.input.setMinimumWidth(self.input.sizeHintForColumn(0))
+        listCounter += 1
+        return listCounter
 
 
     def _processInput(self, *fields):
@@ -240,6 +258,7 @@ class ParameterInputDialog(QDialog):
                 lists.append(field["list"])
             elif field["type"] == "dropdownlist":
                 lists.append(field["list"])
+
         return dict, lists
 
 
@@ -272,13 +291,15 @@ class ParameterInputDialog(QDialog):
         outputList = []
         # Sometimes the values parsed could be list or hexadecimals in strings
         for param in listParams:
+            ##print("param= {}".format(param))
             try:
                 outputList.append(literal_eval(param))
+                ##print("literal_eval(param)= {}".format(literal_eval(param)))
             except:
                 outputList.append(param)
     
         if outputList is None: 
-            return 1, fields
+            return 1, []
         else:
             # Overwrite the value key with the returned parameter
             for f, field in enumerate(fields):
@@ -291,7 +312,8 @@ class ParameterInputDialog(QDialog):
                 elif field["type"] == "dropdownlist":
                     value = outputList[f]
                     field["value"] = field["list"].index(value) 
-    
+                    outputList[f] =  field["list"].index(value) 
+
                 elif field["type"] == "string":
                     field["value"] = outputList[f]
     
@@ -300,7 +322,8 @@ class ParameterInputDialog(QDialog):
     
                 elif field["type"] == "float":
                     field["value"] = outputList[f]
-            return 0, fields
+
+            return 0, outputList
 
 
     def returnListParameterValues(self):
@@ -319,7 +342,6 @@ class ParameterInputDialog(QDialog):
                     paramList.append([itemText.text() for itemText in item.selectedItems()])
                 else:
                     paramList.append(item.value())
-
             return self._processOutput(self.fields, paramList)
         except Exception as e:
             print('Error in class ParameterInputDialog.returnListParameterValues: ' + str(e))
