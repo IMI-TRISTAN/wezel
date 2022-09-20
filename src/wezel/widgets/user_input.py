@@ -291,10 +291,8 @@ class ParameterInputDialog(QDialog):
         outputList = []
         # Sometimes the values parsed could be list or hexadecimals in strings
         for param in listParams:
-            ##print("param= {}".format(param))
             try:
                 outputList.append(literal_eval(param))
-                ##print("literal_eval(param)= {}".format(literal_eval(param)))
             except:
                 outputList.append(param)
     
@@ -311,17 +309,7 @@ class ParameterInputDialog(QDialog):
         
                 elif field["type"] == "dropdownlist":
                     value = outputList[f]
-                    field["value"] = field["list"].index(value) 
                     outputList[f] =  field["list"].index(value) 
-
-                elif field["type"] == "string":
-                    field["value"] = outputList[f]
-    
-                elif field["type"] == "integer":
-                    field["value"] = outputList[f]
-    
-                elif field["type"] == "float":
-                    field["value"] = outputList[f]
 
             return 0, outputList
 
