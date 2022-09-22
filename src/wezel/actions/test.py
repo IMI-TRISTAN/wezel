@@ -27,6 +27,6 @@ class Test_UserInput(wezel.Action):
             {"label":"Type a string", "type":"string","value":"hello world!"},
             title = "Can we have some input?")
         if not cancel: 
-            for field in output:
-                print(field)
+            for value in output:
+                print(value)
                 
